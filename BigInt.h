@@ -5,8 +5,10 @@
 class BigInt {
 private:
     static constexpr size_t _reserve_value{ 256 };
-    static constexpr int _base{ 2 };
+    static constexpr int _base{ 1000000 };
+    static constexpr std::string_view format_str{ "{:06}" };
     std::vector<int> _num{}; // number is written in backwards
+    int _sign{};
 
     // private methods:
 
@@ -23,7 +25,6 @@ private:
     void _init();
 
 public:
-    int sign{};
 
     // Constructors and Destructor here:
 
@@ -35,11 +36,7 @@ public:
 
     BigInt(const std::vector<int>& vec, int sign);
 
-    BigInt(const std::vector<int>&& vec, int sign) noexcept;
-
-    BigInt(const std::vector<int>& vec);
-
-    BigInt(std::vector<int>&& vec) noexcept;
+    BigInt(std::vector<int>&& vec, int sign) noexcept;
 
     BigInt(std::integral auto number);
 
@@ -47,11 +44,13 @@ public:
 
     // bunch of methods here
 
+    int sign() const;
+
     size_t size() const;
 
-    void print_inner_representation() const;
-
     std::string to_string() const;
+
+    void print_inner_representation() const;
 
     void print() const;
 
@@ -75,3 +74,9 @@ public:
 
     // to be added: operators(*, /, %, ++, --), methods: to_string(), constructors: BigInt(std::string number), pow(BigInt N, int n), pow_mod(BigInt N, int n, BigInt mod)
 };
+
+// other functions:
+namespace std {
+    const BigInt abs(const BigInt& N);
+    std::string to_string();
+}

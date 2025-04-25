@@ -1,23 +1,16 @@
 #include <algorithm>
 #include <concepts>
-#include <format>
 #include <iostream>
+#include <format>
 #include <print>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cmath>
 
 #include "BigInt.h"
 
-const BigInt abs(const BigInt& N) {
-    if (N.sign > 0) {
-        return +N;
-    }
-    else {
-        return -N;
-    }
-}
-
+// private methods:
 
 void BigInt::_reserve_optimization(std::vector<int>& vec, const std::vector<size_t>& sizes) {
     vec.reserve(std::max(*(std::max_element(sizes.begin(), sizes.end())), _reserve_value));
@@ -46,45 +39,54 @@ void BigInt::_init() {
         _num.push_back(0);
     }
     _delete_leading_zeros();
+    if (size() == 1 && _num[0] == 0) {
+        _sign = 0;
+    }
     _reserve_optimization();
 }
 
 // Constructors and Destructor here:
 
-BigInt::BigInt() : _num{ {0} }, sign{ 0 } {};
+BigInt::BigInt() : _num{ {0} }, _sign{ 0 } {};
 
-BigInt::BigInt(const BigInt& other) : _num{ other._num }, sign{ other.sign } {
+BigInt::BigInt(const BigInt& other) : _num{ other._num }, _sign{ other.sign() } {
     _init();
 }
 
-BigInt::BigInt(BigInt&& other) noexcept : _num{ std::move(other._num) }, sign{ other.sign } {
+BigInt::BigInt(BigInt&& other) noexcept : _num{ std::move(other._num) }, _sign{ other.sign() } {
     _init();
 }
 
-BigInt::BigInt(const std::vector<int>& vec, int sign) : _num{ vec }, sign{ sign } {
-    _init();
-}
-
-BigInt::BigInt(const std::vector<int>&& vec, int sign) noexcept : _num{ std::move(vec) }, sign{ sign } {
-    _init();
-}
-
-BigInt::BigInt(const std::vector<int>& vec) : _num{ vec }, sign{ 0 } {
-    for (const auto& n : vec) {
+BigInt::BigInt(const std::vector<int>& vec, int sign = 0) : _num{ vec }, _sign{ sign } {
+    bool flag = true;
+    for (const auto& n : _num) {
         if (n != 0) {
-            sign = 1;
+            flag = false;
             break;
         }
+    }
+    if (flag) {
+        _sign = 0;
+    }
+    if (abs(_sign) > 1) {
+        _sign /= abs(_sign);
     }
     _init();
 }
 
-BigInt::BigInt(std::vector<int>&& vec) noexcept : _num{ std::move(vec) }, sign{ 0 } {
-    for (const auto& n : vec) {
+BigInt::BigInt(std::vector<int>&& vec, int sign = 0) noexcept : _num{ std::move(vec) }, _sign{ sign } {
+    bool flag = true;
+    for (const auto& n : _num) {
         if (n != 0) {
-            sign = 1;
+            flag = false;
             break;
         }
+    }
+    if (flag) {
+        _sign = 0;
+    }
+    if (abs(_sign) > 1) {
+        _sign /= abs(_sign);
     }
     _init();
 }
@@ -94,10 +96,10 @@ BigInt::BigInt(std::integral auto number) {
         _num.push_back(0);
     }
     else if (number > 0) {
-        sign = 1;
+        _sign = 1;
     }
     else {
-        sign = -1;
+        _sign = -1;
     }
     number = std::abs(number);
     while (number != 0) {
@@ -111,13 +113,34 @@ BigInt::~BigInt() = default;
 
 // bunch of methods here
 
+int BigInt::sign() const {
+    return _sign;
+}
+
 size_t BigInt::size() const { return _num.size(); }
 
+std::string BigInt::to_string() const {
+    std::string res{ sign() == -1 ? "-" : "" };
+    bool first = true;
+    for (auto it = _num.rbegin(); it != _num.rend(); ++it) {
+        std::string part{};
+        if (first) {
+            part = std::format("{}", *it);
+            first = false;
+        }
+        else {
+            part = std::format(format_str, *it);
+        }
+        res += part;
+    }
+    return res;
+}
+
 void BigInt::print_inner_representation() const {
-    if (sign == 1) {
+    if (_sign == 1) {
         std::cout << "+ ";
     }
-    else if (sign == -1) {
+    else if (_sign == -1) {
         std::cout << "- ";
     }
     std::cout << "{ ";
@@ -135,11 +158,6 @@ void BigInt::print_inner_representation() const {
     std::cout << " }\n";
 }
 
-std::string BigInt::to_string() const {
-    std::string res{};
-    return res;
-}
-
 void BigInt::print() const { std::print("{}", this->to_string()); }
 
 void BigInt::println() const { std::println("{}", this->to_string()); }
@@ -147,18 +165,20 @@ void BigInt::println() const { std::println("{}", this->to_string()); }
 
 BigInt& BigInt::operator=(const BigInt& other) {
     _num = other._num;
-    sign = other.sign;
+    _sign = other.sign();
+    _init();
     return *this;
 }
 
 BigInt& BigInt::operator=(BigInt&& other) noexcept {
     _num = std::move(other._num);
-    sign = other.sign;
+    _sign = other.sign();
+    _init();
     return *this;
 }
 
 bool operator==(const BigInt& N1, const BigInt& N2) {
-    return (N1._num == N2._num) && (N1.sign == N2.sign);
+    return (N1._num == N2._num) && (N1.sign() == N2.sign());
 }
 
 bool operator!=(const BigInt& N1, const BigInt& N2) {
@@ -166,8 +186,8 @@ bool operator!=(const BigInt& N1, const BigInt& N2) {
 }
 
 bool operator<(const BigInt& N1, const BigInt& N2) {
-    if (N1.sign != N2.sign) {
-        return N1.sign < N2.sign;
+    if (N1.sign() != N2.sign()) {
+        return N1.sign() < N2.sign();
     }
     if (N1.size() != N2.size()) {
         return N1.size() < N2.size();
@@ -175,7 +195,7 @@ bool operator<(const BigInt& N1, const BigInt& N2) {
     for (auto it1 = N1._num.rbegin(), it2 = N2._num.rbegin();
         it1 != N1._num.rend(); it1++, it2++) {
         if (*it1 != *it2) {
-            if (N1.sign == 1) {
+            if (N1.sign() == 1) {
                 return *it1 < *it2;
             }
             else {
@@ -203,11 +223,11 @@ BigInt operator+(const BigInt& N) {
 }
 
 BigInt operator-(const BigInt& N) {
-    return BigInt(N._num, -N.sign);
+    return BigInt(N._num, -N.sign());
 }
 
 BigInt operator+(const BigInt& N1, const BigInt& N2) {
-    if (N1.sign * N2.sign == -1) {
+    if (N1.sign() * N2.sign() == -1) {
         return operator-(N1, -N2);
     }
 
@@ -216,7 +236,7 @@ BigInt operator+(const BigInt& N1, const BigInt& N2) {
         res_reserve_value = std::max(BigInt::_reserve_value, res_size + 1);
     res.reserve(res_reserve_value);
 
-    int sum{}, carry{}, sign{ N1.sign ? N1.sign : N2.sign };
+    int sum{}, carry{}, sign{ N1.sign() ? N1.sign() : N2.sign() };
 
     for (size_t i = 0; i < res_size || carry; ++i) {
         sum = carry;
@@ -239,21 +259,21 @@ BigInt operator+(const BigInt& N1, const BigInt& N2) {
 }
 
 BigInt operator-(const BigInt& N1, const BigInt& N2) {
-    if (N1.sign * N2.sign == -1) {
+    if (N1.sign() * N2.sign() == -1) {
         return N1 + (-N2);
     }
-    if (abs(N1) == abs(N2)) {
+    if (std::abs(N1) == std::abs(N2)) {
         return BigInt(0);
     }
 
-    bool abs_cmp = abs(N1) < abs(N2);
+    bool abs_cmp = std::abs(N1) < std::abs(N2);
     const BigInt& larger = abs_cmp ? N2 : N1, & smaller = abs_cmp ? N1 : N2;
 
     std::vector<int> res;
     size_t larger_size = larger.size(), smaller_size = smaller.size(), res_size = larger_size, res_reserve_value = res_size;
     res.reserve(res_reserve_value);
 
-    int diff{}, borrow{}, sign = abs_cmp ? -larger.sign : larger.sign;
+    int diff{}, borrow{}, sign = abs_cmp ? -larger.sign() : larger.sign();
 
     for (size_t i = 0; i < res_size; ++i) {
         diff = -borrow;
@@ -275,14 +295,35 @@ BigInt operator-(const BigInt& N1, const BigInt& N2) {
 
 // to be added: operators(*, /, %, ++, --), methods: to_string(), constructors: BigInt(std::string number), pow(BigInt N, int n), pow_mod(BigInt N, int n, BigInt mod)
 
+// other functions:
+
+namespace std {
+
+    const BigInt abs(const BigInt& N) {
+        if (N.sign() > 0) {
+            return +N;
+        }
+        else {
+            return -N;
+        }
+    }
+
+    std::string to_string(const BigInt& N) {
+        return N.to_string();
+    }
+}
+
+
 
 int main() {
-    BigInt N{ 10 }, M{ -20 }, K{};
+    BigInt N{ 10000000 }, M{ -20 }, K{};
     K.print_inner_representation();
     K = N + M;
     K.print_inner_representation();
+    K.println();
     std::println("{}", N != M);
-    K = N - (M - M);
+    K = -N - (M - M);
     K.print_inner_representation();
+    K.println();
     return 0;
 }
