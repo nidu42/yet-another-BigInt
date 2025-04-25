@@ -1,0 +1,77 @@
+// C++ 23 required!
+// Just a small project by Sharapudin Dibirov aka nidu
+// Let's make 'em Big Ints nice in C++!
+
+class BigInt {
+private:
+    static constexpr size_t _reserve_value{ 256 };
+    static constexpr int _base{ 2 };
+    std::vector<int> _num{}; // number is written in backwards
+
+    // private methods:
+
+    void _reserve_optimization(std::vector<int>& vec, const std::vector<size_t>& sizes);
+
+    void _reserve_optimization(const std::vector<size_t>& sizes);
+
+    void _reserve_optimization();
+
+    void _delete_leading_zeros(std::vector<int>& vec);
+
+    void _delete_leading_zeros();
+
+    void _init();
+
+public:
+    int sign{};
+
+    // Constructors and Destructor here:
+
+    BigInt();
+
+    BigInt(const BigInt& other);
+
+    BigInt(BigInt&& other) noexcept;
+
+    BigInt(const std::vector<int>& vec, int sign);
+
+    BigInt(const std::vector<int>&& vec, int sign) noexcept;
+
+    BigInt(const std::vector<int>& vec);
+
+    BigInt(std::vector<int>&& vec) noexcept;
+
+    BigInt(std::integral auto number);
+
+    ~BigInt();
+
+    // bunch of methods here
+
+    size_t size() const;
+
+    void print_inner_representation() const;
+
+    std::string to_string() const;
+
+    void print() const;
+
+    void println() const;
+    // bunch of operators here:
+
+    BigInt& operator=(const BigInt& other);
+    BigInt& operator=(BigInt&& other) noexcept;
+
+    friend bool operator==(const BigInt& N1, const BigInt& N2);
+    friend bool operator!=(const BigInt& N1, const BigInt& N2);
+    friend bool operator<(const BigInt& N1, const BigInt& N2);
+    friend bool operator>(const BigInt& N1, const BigInt& N2);
+    friend bool operator<=(const BigInt& N1, const BigInt& N2);
+    friend bool operator>=(const BigInt& N1, const BigInt& N2);
+
+    friend BigInt operator+(const BigInt& N);
+    friend BigInt operator-(const BigInt& N);
+    friend BigInt operator+(const BigInt& N1, const BigInt& N2);
+    friend BigInt operator-(const BigInt& N1, const BigInt& N2);
+
+    // to be added: operators(*, /, %, ++, --), methods: to_string(), constructors: BigInt(std::string number), pow(BigInt N, int n), pow_mod(BigInt N, int n, BigInt mod)
+};
